@@ -22,9 +22,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.farng.mp3.AbstractMP3Tag;
@@ -53,12 +54,12 @@ public class MusicOrganizer{
     private Path targetPath;
     private String targetFormat;
     
-    private List<Path> filesSelected = new ArrayList<Path>();
+    private List<Path> filesSelected = new ArrayList<>();
     private BitSet alreadySelectedFiles;
     private boolean recurseFolders = false;
     
     private final BlockingDeque<MusicFile> deQueue 
-            = new LinkedBlockingDeque<MusicFile>();
+            = new LinkedBlockingDeque<>();
     
     private int numberOfFiles = 100;
     
@@ -121,42 +122,51 @@ public class MusicOrganizer{
      * @param args the command line arguments
      * @throws java.io.IOException
      * @throws org.farng.mp3.TagException
-     * @throws org.apache.commons.cli.ParseException
      */
-    public static void main(String[] args) throws IOException, TagException, 
-            ParseException {
+    public static void main(String[] args) throws IOException, TagException{
         Options opts = new Options();
         createOptions(opts);
-        CommandLineParser parser = new BasicParser();
-        CommandLine comLine = parser.parse(opts, args);
-        Path srcPath = Paths.get("/media/sdb4/Music/KKNair/KKNairHindi/");
-        Path targetPath = Paths.get("/tmp");
-        String format = "%genre%/%album%[%year%]/%title%";
-        int noOfFiles = 100;
+        CommandLineParser parser;
+        parser = new DefaultParser();
+        try{
+            CommandLine comLine = parser.parse(opts, args);
+            Path srcPath = Paths.get("/media/sdb4/Music/KKNair/KKNairHindi/");
+            Path targetPath = Paths.get("/tmp");
+            String format = "%genre%/%album%[%year%]/%title%";
+            int noOfFiles = 100;
         
         
-        File srcDir = new File("/media/sdb4/Music/KKNair/KKNairHindi/");
-        if (comLine.hasOption('s')){
-            srcDir = new File(comLine.getOptionValue('s'));
-            srcPath = Paths.get(comLine.getOptionValue('s'));
+            File srcDir = new File("/media/sdb4/Music/KKNair/KKNairHindi/");
+            if (comLine.hasOption('s')){
+                srcDir = new File(comLine.getOptionValue('s'));
+                srcPath = Paths.get(comLine.getOptionValue('s'));
+            }
+        
+            if (comLine.hasOption('t')) {
+                targetPath = Paths.get(comLine.getOptionValue('t'));
+            }
+
+            if(comLine.hasOption('f')){
+                format = comLine.getOptionValue('f');
+            }
+
+            if(comLine.hasOption('n')){
+                noOfFiles = Integer.parseInt(comLine.getOptionValue('n'));
+            }
+
+            MusicOrganizer organizer = new MusicOrganizer(srcPath, targetPath, true,
+                    format, noOfFiles);
+            organizer.init();
+        }
+        catch (ParseException ex)
+        {
+            Logger.getLogger("MusicOrganizer").log(Level.SEVERE, ex.getMessage());
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("musicOrganizer", opts);
         }
         
-        if (comLine.hasOption('t')) {
-            targetPath = Paths.get(comLine.getOptionValue('t'));
-        }
-        
-        if(comLine.hasOption('f')){
-            format = comLine.getOptionValue('f');
-        }
-        
-        if(comLine.hasOption('n')){
-            noOfFiles = Integer.parseInt(comLine.getOptionValue('n'));
-        }
-        
-        MusicOrganizer organizer = new MusicOrganizer(srcPath, targetPath, true,
-                format, noOfFiles);
-        organizer.init();
     }
+        
 
     /**
      * @return the sourcePath

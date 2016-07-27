@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
-import sun.util.logging.PlatformLogger;
 
 /**
  * Just gives a default implementation of getArtists..
@@ -19,7 +18,7 @@ public abstract class AbstractMusicFile implements MusicFile {
    public static final String DEFAULT_DELIMITERS = "& ,";
    private String delimiter = DEFAULT_DELIMITERS;
    
-   private Path filePath;
+   private final Path filePath;
    
    public AbstractMusicFile(Path file)
    {
