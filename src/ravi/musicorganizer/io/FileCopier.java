@@ -40,10 +40,7 @@ public class FileCopier implements Runnable {
             FileHandler handler = new FileHandler("/tmp/consumer.txt");
             LOGGER.addHandler(handler);
         }
-        catch(IOException ex){
-            LOGGER.log(Level.WARNING, "Could not create custom handler", ex);
-        }
-        catch(SecurityException ex){
+        catch(IOException | SecurityException ex){
             LOGGER.log(Level.WARNING, "Could not create custom handler", ex);
         }
         
@@ -78,7 +75,8 @@ public class FileCopier implements Runnable {
                     matcher.group()));
         }
         matcher.appendTail(buffer);
-        buffer.append(".mp3");
+        String extn = extractExtension(file.getPath().getFileName().toString());
+        buffer.append((extn == null) ? ".mp3" : extn);
         
         return generateTargetPathFromString(buffer.toString());
             
@@ -87,11 +85,12 @@ public class FileCopier implements Runnable {
     
     @Override
     public void run() {
-        while (poll > 0)
+        boolean terminate = false;
+        while (!terminate)
         {
             try {
                 MusicFile file = musicFileList.takeFirst();
-                if (file.equals(MusicFile.TERMINATOR)) poll--;
+                if (file.equals(MusicFile.TERMINATOR)) terminate = true;
                 else {
                     Logger.getLogger(getClass().getName()).log(Level.INFO, 
                         " {0}\n{1}", new String[]{String.valueOf(poll), 
@@ -131,20 +130,13 @@ public class FileCopier implements Runnable {
             Method getter = file.getClass().getMethod(methodName);
             
             returnString = getter.invoke(file).toString();
+            //If Empty add unknown
             if (returnString.length() == 0) 
                 returnString = "Unknown-" + methodName.substring(3);
             
-        } catch (NoSuchMethodException ex) {
+        } catch (NoSuchMethodException | SecurityException | 
+                IllegalAccessException | InvocationTargetException ex) {
             Logger.getLogger(FileCopier.class.getName()).log(Level.SEVERE, null,
-                    ex);
-        } catch (SecurityException ex) {
-            Logger.getLogger(FileCopier.class.getName()).log(Level.SEVERE, null, 
-                    ex);
-        } catch (IllegalAccessException ex) {
-            Logger.getLogger(FileCopier.class.getName()).log(Level.SEVERE, null, 
-                    ex);
-        } catch (InvocationTargetException ex) {
-            Logger.getLogger(FileCopier.class.getName()).log(Level.SEVERE, null, 
                     ex);
         }
         return returnString;
@@ -158,6 +150,13 @@ public class FileCopier implements Runnable {
             path = path.resolve(tokenizer.nextToken());
         }
         return path;
+    }
+
+    private String extractExtension(String fileName) {
+        int index = fileName.lastIndexOf('.');
+        if (index < 0) return null;
+        String extn = fileName.substring(index + 1);
+        return extn;
     }
 
 }

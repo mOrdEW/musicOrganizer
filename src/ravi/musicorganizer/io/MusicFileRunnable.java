@@ -58,9 +58,6 @@ public class MusicFileRunnable implements Runnable {
         {
             LOGGER.log(Level.SEVERE, "Could not parse :: " + filePath, io);
         }
-        finally {
-            deQueue.addLast(MusicFile.TERMINATOR);
-        }
     }
     
 }
