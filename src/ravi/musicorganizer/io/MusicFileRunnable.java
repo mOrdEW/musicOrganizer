@@ -31,10 +31,7 @@ public class MusicFileRunnable implements Runnable {
             FileHandler handler = new FileHandler("/tmp/producer.txt");
             LOGGER.addHandler(handler);
         }
-        catch(IOException ex){
-            LOGGER.log(Level.WARNING, "Could not create custom handler", ex);
-        }
-        catch(SecurityException ex){
+        catch(IOException | SecurityException ex){
             LOGGER.log(Level.WARNING, "Could not create custom handler", ex);
         }
     }
