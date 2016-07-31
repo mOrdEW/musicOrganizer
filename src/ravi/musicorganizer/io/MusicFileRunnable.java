@@ -6,6 +6,8 @@ package ravi.musicorganizer.io;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.concurrent.BlockingDeque;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -18,10 +20,11 @@ import ravi.musicorganizer.musicfile.MusicFile;
  * 
  * @author ravi
  */
-public class MusicFileRunnable implements Runnable {
+public class MusicFileRunnable extends Observable implements Runnable {
     
     private final Path filePath;
-    private final BlockingDeque<MusicFile> deQueue;
+    private final BlockingDeque<MusicFile> deQueue; 
+    
     public static final Logger LOGGER = Logger.getLogger(MusicFileRunnable.class.
             getName());
     
@@ -37,10 +40,13 @@ public class MusicFileRunnable implements Runnable {
     }
             
     
-    public MusicFileRunnable(Path file, BlockingDeque<MusicFile> deque)
+    public MusicFileRunnable(Path file, BlockingDeque<MusicFile> deque, 
+            Observer o)
     {
+        super();
         filePath = file;
         deQueue = deque;
+        addObserver(o);
     }
 
     @Override
@@ -54,6 +60,11 @@ public class MusicFileRunnable implements Runnable {
         catch(Exception io)
         {
             LOGGER.log(Level.SEVERE, "Could not parse :: " + filePath, io);
+        }
+        finally
+        {
+            setChanged();
+            notifyObservers();
         }
     }
     

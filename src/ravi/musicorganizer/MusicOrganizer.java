@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingDeque;
@@ -40,7 +42,7 @@ import ravi.musicorganizer.musicfile.MusicFile;
  *
  * @author ravi
  */
-public class MusicOrganizer{
+public class MusicOrganizer implements Observer {
     private static void createOptions(Options opts) {
         opts.addOption("s", "src", true, "Source Directory");
         opts.addOption("t", "target", true, "Target Directory");
@@ -64,7 +66,7 @@ public class MusicOrganizer{
             = new LinkedBlockingDeque<>();
     
     private int numberOfFiles = 100;
-    private final Set<MusicFileRunnable> producerRegistry = new HashSet<>();
+    private final Set producerRegistry = new HashSet();
     
    public MusicOrganizer(Path source, Path target)
    {
@@ -256,6 +258,7 @@ public class MusicOrganizer{
         Executor executor = Executors.newCachedThreadPool();
         //Executor executor = Executors.newSingleThreadExecutor();
         Random random = new Random();
+        MusicFileRunnable producer;
 
         while (filesRemaining > 0)
         {
@@ -268,17 +271,22 @@ public class MusicOrganizer{
                 Path randomFilePath = filesSelected.get(randomIndex);
                 Logger.getLogger(getClass().getName()).log(Level.INFO, 
                         "File: {0}", randomFilePath);
-                executor.execute(new MusicFileRunnable(randomFilePath, 
-                        deQueue));
+                producer = new MusicFileRunnable(randomFilePath, deQueue, this);
+                registerProducer(producer);
+                executor.execute(producer);
             }
         }
+        while(!producerRegistry.isEmpty()) {
+            //System.out.println(producerRegistry.size());
+        }   
+        deQueue.add(MusicFile.TERMINATOR);
     }
     
     /** 
      * Registers a producer
      * @param producer The producer to be added.
      */
-    public void registerProducer(MusicFileRunnable producer){
+    private void registerProducer(Object producer){
         producerRegistry.add(producer);
     }
     
@@ -286,15 +294,20 @@ public class MusicOrganizer{
      * Unregister a producer
      * @param producer The producer to be removed.
      */
-     public void unregisterProducer(MusicFileRunnable producer) {
+     private void unregisterProducer(Object producer) {
          producerRegistry.remove(producer);  
      }
      
      /**
       * Clears all producers
       */
-     public void clearProducerRegistry(){
+     private void clearProducerRegistry(){
          producerRegistry.clear();
      }
+
+    @Override
+    public void update(Observable o, Object arg) {
+        unregisterProducer(o);
+    }
              
 }
