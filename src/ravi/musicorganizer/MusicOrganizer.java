@@ -14,8 +14,10 @@ import java.nio.file.Paths;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -62,6 +64,7 @@ public class MusicOrganizer{
             = new LinkedBlockingDeque<>();
     
     private int numberOfFiles = 100;
+    private final Set<MusicFileRunnable> producerRegistry = new HashSet<>();
     
    public MusicOrganizer(Path source, Path target)
    {
@@ -270,4 +273,28 @@ public class MusicOrganizer{
             }
         }
     }
+    
+    /** 
+     * Registers a producer
+     * @param producer The producer to be added.
+     */
+    public void registerProducer(MusicFileRunnable producer){
+        producerRegistry.add(producer);
+    }
+    
+    /**
+     * Unregister a producer
+     * @param producer The producer to be removed.
+     */
+     public void unregisterProducer(MusicFileRunnable producer) {
+         producerRegistry.remove(producer);  
+     }
+     
+     /**
+      * Clears all producers
+      */
+     public void clearProducerRegistry(){
+         producerRegistry.clear();
+     }
+             
 }
